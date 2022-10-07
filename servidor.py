@@ -3,12 +3,6 @@ from socket import socket, AF_INET, SOCK_STREAM
 from threading import Thread
 
 
-def primo(n): #função para verificar se é primo
-    for i in range(2,n):
-        if n % i == 0:
-            return False
-    return True
-
 def HandleRequest(mClientSocket, mClientAddr):
     #Recebe no data1 o primo e gerador que foi enviado pelo cliente
     data1 = mClientSocket.recv(2048)
@@ -18,6 +12,7 @@ def HandleRequest(mClientSocket, mClientAddr):
     
     primoComum = int(chaves[1])
     gerador = int(chaves[2])
+    print(f'primocomum = {primoComum}// gerador = {gerador}')
     #envia para o cliente que esta de acordo com o primo e gerador recebido
     rep = 'Chaves OK'
     mClientSocket.send(rep.encode())
@@ -35,8 +30,9 @@ def HandleRequest(mClientSocket, mClientAddr):
 
     #gera a chave compartihada do cliente e servidor
     chaveCompartilhada = (chavePublicaCliente**chaveConfidencialServidor)%primoComum
-
+    print(f'Chave compartilhada = {chaveCompartilhada}')
     #Envia para o cliente a chave compartilhada
+    
     mClientSocket.send(str(chaveCompartilhada).encode())
     
     #Recebe a chave compartilhada do cliente
@@ -44,7 +40,7 @@ def HandleRequest(mClientSocket, mClientAddr):
     req3 = data3.decode()
     
     #Começa a transferencia dos dados e verifica se a chave compartilhada recebeida é a mesma enviada
-    while True and req3 == chaveCompartilhada:
+    while True and req3 == str(chaveCompartilhada):
         # Este loop foi criado para que o servidor conseguisse receber diversas requisições de
         # um mesmo cliente, usando a mesma conexão, ou seja, sem que fosse necessária a
         # criação de uma nova conexão.
