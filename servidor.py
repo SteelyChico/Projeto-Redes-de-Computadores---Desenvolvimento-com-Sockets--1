@@ -53,7 +53,7 @@ def HandleRequest(mClientSocket, mClientAddr):
         req = data.decode()
         print(f'A requisição foi:{req}')
         # Após receber e processar a requisição o servidor está apto para enviar uma resposta.
-        rep = input('>>>')
+        rep = f'Oi clinte {mClientAddr}'
         mClientSocket.send(rep.encode())
 
 
