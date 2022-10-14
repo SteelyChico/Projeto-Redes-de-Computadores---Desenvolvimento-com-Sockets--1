@@ -1,13 +1,14 @@
 import random
 from socket import socket, AF_INET, SOCK_STREAM
 
+
 def CriaGeradores(): #criou o gerador e primo comum aos dois
     geradorPrimo = random.randint(1,1000)
     gerador = random.randint(1,1000)
 
     while not primo(geradorPrimo):
         geradorPrimo = random.randint(1,1000)
-    return geradorPrimo, gerador 
+    return geradorPrimo, gerador
 
 def primo(n): #função para verificar se é primo
     for i in range(2,n):
@@ -19,7 +20,6 @@ mClientSocket = socket(AF_INET, SOCK_STREAM)
 mClientSocket.connect(('localhost', 1235))
 
 geradorPrimo, gerador = CriaGeradores()
-
 #Envia essas chaves para o servidor
 chavesPrimoGerador = (f'chaves {geradorPrimo} {gerador}')
 mClientSocket.send(chavesPrimoGerador.encode())
@@ -37,7 +37,7 @@ if req == 'Chaves OK':
     rep1 = (gerador**(chaveConfidencialCliente))%geradorPrimo
     mClientSocket.send(str(rep1).encode())
 
-    #Recebe a chave publica do servidor 
+    #Recebe a chave publica do servidor
     data1 = mClientSocket.recv(2048)
     req1 = data1.decode()
     chavePublicaServidor = int(req1)
