@@ -94,9 +94,9 @@ def HandleRequest(mClientSocket, mClientAddr):
                     nomeArquivoDescriptografado = descriptografiaAES(nomeArquivo, senhaCriptografia)
                     print(nomeArquivoDescriptografado)
 
-                    extensao = nomeArquivoDescriptografado.split('.')
+                    extensao = nomeArquivoDescriptografado.split('.')[-1]
                     arquivoBinario = False
-                    if extensao[1] in tipoArquivoBinario:
+                    if extensao in tipoArquivoBinario:
                         arquivoBinario = True
                     try:
                         if arquivoBinario:
