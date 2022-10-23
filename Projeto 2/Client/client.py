@@ -104,8 +104,8 @@ if req2 == str(chaveCompartilhada):
             # Este loop foi criado apenas para que o cliente conseguisse enviar múltiplas solicitações de arquivos
             nomeArquivo = input('Digite o nome do arquivo >>')
 
-            nomeArquivoCriptografado = critogrtafiaAES(nomeArquivo,senhaCriptografia)
-            mClientSocket.send(nomeArquivoCriptografado.encode())
+            # nomeArquivoCriptografado = critogrtafiaAES(nomeArquivo,senhaCriptografia)
+            mClientSocket.send(nomeArquivo.encode())
             
             data2 = mClientSocket.recv(2048)
             autorizacao = data2.decode()
