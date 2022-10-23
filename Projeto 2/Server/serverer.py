@@ -89,10 +89,12 @@ def HandleRequest(mClientSocket, mClientAddr):
                 menssagemCriptografada = critogrtafiaAES(mensagemAutorizacao, senhaCriptografia)
                 mClientSocket.send(menssagemCriptografada.encode())
                 while True:
-                    nomeArquivo = mClientSocket.recv(2048)
+                    nomeArquivo = mClientSocket.recv(2048).decode()
+                    
                     nomeArquivoDescriptografado = descriptografiaAES(nomeArquivo, senhaCriptografia)
-                    extensao = nomeArquivoDescriptografado.split('.')
                     print(nomeArquivoDescriptografado)
+
+                    extensao = nomeArquivoDescriptografado.split('.')
                     arquivoBinario = False
                     if extensao[1] in tipoArquivoBinario:
                         arquivoBinario = True
