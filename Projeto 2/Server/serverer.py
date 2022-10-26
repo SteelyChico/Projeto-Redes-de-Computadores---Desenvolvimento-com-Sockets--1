@@ -92,29 +92,46 @@ def HandleRequest(mClientSocket, mClientAddr):
                     nomeArquivo = mClientSocket.recv(2048).decode()
                     
                     nomeArquivoDescriptografado = descriptografiaAES(nomeArquivo, senhaCriptografia)
-                    print(nomeArquivoDescriptografado)
 
                     extensao = nomeArquivoDescriptografado.split('.')[-1]
                     arquivoBinario = False
                     if extensao in tipoArquivoBinario:
                         arquivoBinario = True
-                    try:
-                        if arquivoBinario:
-                            file = open(nomeArquivoDescriptografado, 'rb')
-                            conteudoArquivo = file.read()
-                            mClientSocket.send(conteudoArquivo)
-                        else:
-                            file = open(nomeArquivoDescriptografado, 'r')
-                            conteudoArquivo = file.read()
-                            mClientSocket.send(conteudoArquivo.encode('utf-8'))
-                    except FileNotFoundError:
-                        print(f'arquivo nao existe {nomeArquivoDescriptografado}')
-                        print('HTTP/1.1 404 File not found\r\n\r\nFound file not found')
-                        mClientSocket.close()
+
+                    if (arquivoBinario == False) and (extensao not in tipoArquivoText):
+                        erro400 = 'Mensagem de requisição não entendida pelo servidor, nesse caso o cliente escreveu a mensagem de requisiçãocom algum erro de sintaxe;'
+                        mClientSocket.send(erro400.encode())
+                        print(erro400)
+                    else:
+                        erro400 = 'sitaxe ok'
+                        mClientSocket.send(erro400.encode())
+                        try:
+                            if arquivoBinario:
+                                print('é binario')
+                                file = open(nomeArquivoDescriptografado, 'rb')
+                                conteudoArquivo = file.read()
+                                mClientSocket.send(conteudoArquivo)
+                                #mClientSocket.send(b'') #para parar o código
+                            else:
+                                print('nao é bionario')
+                                file = open(nomeArquivoDescriptografado, 'rb')
+                                #mClientSocket.send(b'') #para parar o código
+                                pedaco = file.read(1400)
+                                mClientSocket.send(pedaco)
+                                while True and len(pedaco) != 0:
+                                    pedaco = file.read(1400)
+                                    print(pedaco)
+                                    mClientSocket.send(pedaco)
+
+                        except FileNotFoundError:
+                            print(f'arquivo nao existe {nomeArquivoDescriptografado}')
+                            erro404 = 'HTTP/1.1 404 File not found\r\n\r\nFound file not found'
+                            print(erro404)
+                            mClientSocket.send(erro404.encode())
             else:
                 print('Cliente nao autorizado')
-                mensagemAutorizacao = 'Voce nao autorizacao para acessar os arquivos do servidor'
-                mClientSocket.send(mensagemAutorizacao.encode())
+                erro403 = 'O cliente não tem direitos de acesso ao conteúdo, portanto o servidor está rejeitando dar a resposta.'
+                mClientSocket.send(erro403.encode())
                 mClientSocket.close()
 
 
