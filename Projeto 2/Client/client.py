@@ -29,6 +29,11 @@ def primo(n): #função para verificar se é primo
             return False
     return True
 
+
+tipoArquivoBinario = ['png', 'jpeg', 'bmp', 'jpg']
+tipoArquivoText = ['html', 'css', 'js']
+
+
 mClientSocket = socket(AF_INET, SOCK_STREAM)
 mClientSocket.connect(('localhost', 1235))
 
@@ -112,13 +117,30 @@ if req2 == str(chaveCompartilhada):
             autorizacao = data2.decode()
             autorizacaoDescriptografado = descriptografiaAES(autorizacao, senhaCriptografia)
             if autorizacaoDescriptografado == 'cliente Autorizado':
-                with open(nomeArquivo, 'wb') as file:
-                    while True:
-                        data3 = mClientSocket.recv(2048)
-                        print(data3)
-                        if not data:
-                            break
-                        file.write(data3)
+                data5 = mClientSocket.recv(2048)
+                rep5 = data5.decode()
+
+                if rep5 != 'Mensagem de requisição não entendida pelo servidor, nesse caso o cliente escreveu a mensagem de requisiçãocom algum erro de sintaxe;':
+                    extensao = nomeArquivo.split('.')[-1]
+                    arquivoBinario = False
+                    if extensao in tipoArquivoBinario:
+                        arquivoBinario = True
+
+                    if arquivoBinario:
+                        with open(nomeArquivo, 'wb') as file:
+                            while True:
+                                data3 = mClientSocket.recv(150000000)
+                                file.write(data3)
+                    else:    
+                        with open(nomeArquivo, 'wb') as file:
+                            data3 = mClientSocket.recv(2048)
+                            print(data3)
+                            file.write(data3)
+                            while True and not data3:
+                                data3 = mClientSocket.recv(2048)
+                                file.write(data3)
+                else:
+                    print(rep5)
             else: 
                 data4 = mClientSocket.recv(2048)
                 rep4 = data4.decode()
