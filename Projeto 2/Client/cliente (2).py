@@ -1,30 +1,32 @@
 import random
 from socket import socket, AF_INET, SOCK_STREAM
 import cryptocode
+from cryptography.fernet import Fernet
 
 
-
-def critogrtafiaAES(mensagem, senha): # funcao de criptografia
+def critogrtafiaAES(mensagem, senha):  # funcao de criptografia
     mensagemCriptografada = cryptocode.encrypt(mensagem, f"{senha}")
 
     return mensagemCriptografada
 
-def descriptografiaAES(mensagemCriptografada, senha): #funcao de descriptografia
+
+def descriptografiaAES(mensagemCriptografada, senha):  # funcao de descriptografia
     mensagemDescriptografada = cryptocode.decrypt(mensagemCriptografada, f"{senha}")
 
     return mensagemDescriptografada
 
 
-def CriaGeradores(): #criou o gerador e primo comum aos dois
-    geradorPrimo = random.randint(1,1000)
-    gerador = random.randint(1,1000)
+def CriaGeradores():  # criou o gerador e primo comum aos dois
+    geradorPrimo = random.randint(1, 1000)
+    gerador = random.randint(1, 1000)
 
     while not primo(geradorPrimo):
-        geradorPrimo = random.randint(1,1000)
-    return geradorPrimo, gerador 
+        geradorPrimo = random.randint(1, 1000)
+    return geradorPrimo, gerador
 
-def primo(n): #função para verificar se é primo
-    for i in range(2,n):
+
+def primo(n):  # função para verificar se é primo
+    for i in range(2, n):
         if n % i == 0:
             return False
     return True
@@ -33,94 +35,95 @@ def primo(n): #função para verificar se é primo
 tipoArquivoBinario = ['png', 'jpeg', 'bmp', 'jpg']
 tipoArquivoText = ['html', 'css', 'js']
 
-
 mClientSocket = socket(AF_INET, SOCK_STREAM)
 mClientSocket.connect(('localhost', 1235))
 
 geradorPrimo, gerador = CriaGeradores()
-#Envia essas chaves para o servidor
+# Envia essas chaves para o servidor
 chavesPrimoGerador = (f'chaves {geradorPrimo} {gerador}')
 mClientSocket.send(chavesPrimoGerador.encode())
 
-#O cliente recebe uma mensagem aprovando que o servidor
-#recebeu o gerador e o primo
+# O cliente recebe uma mensagem aprovando que o servidor
+# recebeu o gerador e o primo
 confimacao = mClientSocket.recv(2048)
 req = confimacao.decode()
 
 if req == 'Chaves OK':
-    #Cria uma chave confidencial do cliente
-    chaveConfidencialCliente = random.randint(0,1000)
-    #Executa o primeiro dieff hellman e envia para o servidor sua chave publica do cliente o rep1
-    rep1 = (gerador**(chaveConfidencialCliente))%geradorPrimo
+    # Cria uma chave confidencial do cliente
+    chaveConfidencialCliente = random.randint(0, 1000)
+    # Executa o primeiro dieff hellman e envia para o servidor sua chave publica do cliente o rep1
+    rep1 = (gerador ** (chaveConfidencialCliente)) % geradorPrimo
     mClientSocket.send(str(rep1).encode())
 
-    #Recebe a chave publica do servidor 
+    # Recebe a chave publica do servidor
     data1 = mClientSocket.recv(2048)
     req1 = data1.decode()
     chavePublicaServidor = int(req1)
     print(f'Chave publica do servidor = {chavePublicaServidor}')
 
-    #gera a chave compartihada do cliente e servidor
-    chaveCompartilhada = (chavePublicaServidor**chaveConfidencialCliente)%geradorPrimo
+    # gera a chave compartihada do cliente e servidor
+    chaveCompartilhada = (chavePublicaServidor ** chaveConfidencialCliente) % geradorPrimo
     print(f'chave compartilhada = {chaveCompartilhada}')
 
-    #Envia para o servidor a chave compartilhada
+    # Envia para o servidor a chave compartilhada
     mClientSocket.send(str(chaveCompartilhada).encode())
-    #Recebe a chave compartilhada do servidor
+    # Recebe a chave compartilhada do servidor
     data2 = mClientSocket.recv(2048)
     req2 = data2.decode()
 
-    #Recebe Chave/Senha de criptografia
+    # Recebe Chave/Senha de criptografia
     data3 = mClientSocket.recv(2048)
     req3 = data3.decode()
     senhaCriptografia = req3
 
-    #Cria assinatura e manda para o servidor
-    assinaturaDig = random.randint(0,999999999)
+    # Cria assinatura e manda para o servidor
+    assinaturaDig = random.randint(0, 999999999)
     assinatura = f"{assinaturaDig}"
     mClientSocket.send(assinatura.encode())
 
-#faz primeiro a identificao do cliente
+# faz primeiro a identificao do cliente
 if req2 == str(chaveCompartilhada):
     mensagem = input('Digite sua identificação >>')
-    #criptografa a mensagem recebida 
-    mensagemCriptografada = critogrtafiaAES(mensagem,senhaCriptografia)
-    #Envia a mensagem criptografada pelo socket criado
+    # criptografa a mensagem recebida
+    mensagemCriptografada = critogrtafiaAES(mensagem, senhaCriptografia)
+    # Envia a mensagem criptografada pelo socket criado
     mClientSocket.send(mensagemCriptografada.encode())
 
     mClientSocket.send(assinatura.encode())
-    #Recebendo as respostas do servidor
+    # Recebendo as respostas do servidor
     data = mClientSocket.recv(2048)
     reply = data.decode()
-    #Recebe assinatura
+    # Recebe assinatura
     data1 = mClientSocket.recv(2048)
     reply1 = data1.decode()
 
-    #Verifica assinatura
+    # Verifica assinatura
     if str(reply1) != str(assinatura):
         print('Assinatura incompativel')
     else:
-        #descriptografa a mensagem recebida
+        # descriptografa a mensagem recebida
         mensagemDescriptografada = descriptografiaAES(reply, senhaCriptografia)
         print(f'Menssagem servidor: {mensagemDescriptografada}')
-        
-        #Pos identificacao fazemos a solicitacao dos arquivos
+
+        # Pos identificacao fazemos a solicitacao dos arquivos
         while True:
             # Este loop foi criado apenas para que o cliente conseguisse enviar múltiplas solicitações de arquivos
             nomeArquivo = input('Digite o nome do arquivo >>')
 
-            nomeArquivoCriptografado = critogrtafiaAES(nomeArquivo,senhaCriptografia)
+            nomeArquivoCriptografado = critogrtafiaAES(nomeArquivo, senhaCriptografia)
             mClientSocket.send(nomeArquivoCriptografado.encode())
             # mClientSocket.send(nomeArquivo.encode())
-            
+
             data2 = mClientSocket.recv(2048)
             autorizacao = data2.decode()
             autorizacaoDescriptografado = descriptografiaAES(autorizacao, senhaCriptografia)
             if autorizacaoDescriptografado == 'cliente Autorizado':
-                data5 = mClientSocket.recv(2048)
-                rep5 = data5.decode()
+                recebeChave = mClientSocket.recv(1024)
+                recebeChave.decode()
+                fernet = Fernet(recebeChave)
 
-                if rep5 != 'Mensagem de requisição não entendida pelo servidor, nesse caso o cliente escreveu a mensagem de requisiçãocom algum erro de sintaxe;':
+                data5 = mClientSocket.recv(2048).decode()
+                if data5 != 'Sintaxe cringe':
                     extensao = nomeArquivo.split('.')[-1]
                     arquivoBinario = False
                     if extensao in tipoArquivoBinario:
@@ -129,19 +132,18 @@ if req2 == str(chaveCompartilhada):
                     if arquivoBinario:
                         with open(nomeArquivo, 'wb') as file:
                             while True:
-                                data3 = mClientSocket.recv(150000000)
-                                file.write(data3)
-                    else:    
+                                encriptado = mClientSocket.recv(1500000)
+                                descriptado = fernet.decrypt(encriptado)
+                                file.write(descriptado)
+                                break
+                    else:
                         with open(nomeArquivo, 'wb') as file:
-                            data3 = mClientSocket.recv(2048)
-                            print(data3)
-                            file.write(data3)
-                            while True and not data3:
-                                data3 = mClientSocket.recv(2048)
-                                file.write(data3)
+                            encriptado = mClientSocket.recv(1000000)
+                            descriptado = fernet.decrypt(encriptado)
+                            file.write(descriptado)
                 else:
-                    print(rep5)
-            else: 
+                    print(data5)
+            else:
                 data4 = mClientSocket.recv(2048)
                 rep4 = data4.decode()
                 print(rep4)
