@@ -105,35 +105,33 @@ if req2 == str(chaveCompartilhada):
         # descriptografa a mensagem recebida
         mensagemDescriptografada = descriptografiaAES(reply, senhaCriptografia)
         print(f'Menssagem servidor: {mensagemDescriptografada}')
-        
-        data2 = mClientSocket.recv(2048) #mensagem de autorizacao
+
+        data2 = mClientSocket.recv(2048)  # mensagem de autorizacao
         autorizacao = data2.decode()
         autorizacaoDescriptografado = descriptografiaAES(autorizacao, senhaCriptografia)
-        data4 = mClientSocket.recv(2048) #Assinatura
+        data4 = mClientSocket.recv(2048)  # Assinatura
         reqassinatura2 = data4.decode()
         assinaturaDescriptografado2 = descriptografiaAES(reqassinatura2, senhaCriptografia)
-        
-        
+
         if autorizacaoDescriptografado == 'cliente Autorizado':
             if str(assinaturaDescriptografado2) != str(assinatura):
                 print('Assinatura incompativel')
             else:
                 # Este loop foi criado apenas para que o cliente conseguisse enviar múltiplas solicitações de arquivos
                 while True:
-                    #Recebe nome do arquivo e criptografa para enviar para o server
+                    # Recebe nome do arquivo e criptografa para enviar para o server
                     nomeArquivo = input('Digite o nome do arquivo >>')
                     nomeArquivoCriptografado = critogrtafiaAES(nomeArquivo, senhaCriptografia)
                     mClientSocket.send(nomeArquivoCriptografado.encode())
-                    mClientSocket.send(assinaturaCriptografado.encode()) #Envia assinatura
-                    
-                    #Recebe a chave que criptografa os arquivos por meio da biblioteca fernet
+                    mClientSocket.send(assinaturaCriptografado.encode())  # Envia assinatura
+
+                    # Recebe a chave que criptografa os arquivos por meio da biblioteca fernet
                     recebeChave = mClientSocket.recv(1024)
                     recebeChave.decode()
                     fernet = Fernet(recebeChave)
 
-                    #Abri um arquivo novo e recebe do servidor o arquivo criptografado e descriptografa ele com o comando decrypt, e escreve no novo arquivo
+                    # Abri um arquivo novo e recebe do servidor o arquivo criptografado e descriptografa ele com o comando decrypt, e escreve no novo arquivo
                     with open(nomeArquivo, 'wb') as file:
                         encriptado = mClientSocket.recv(1500000)
                         descriptado = fernet.decrypt(encriptado)
                         file.write(descriptado)
-                    

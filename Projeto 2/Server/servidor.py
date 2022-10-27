@@ -8,13 +8,9 @@ from cryptography.fernet import Fernet
 
 # geração de chave
 key = Fernet.generate_key()
-# string a chave em um arquivo
-with open('filekey.key', 'wb') as filekey:
-    filekey.write(key)
 
 # usando a chave gerada
 fernet = Fernet(key)
-
 
 
 def critogrtafiaAES(mensagem, senha):  # funcao de criptografia
@@ -73,7 +69,7 @@ def HandleRequest(mClientSocket, mClientAddr):
     # Recebe assinatura das mensagens
     data4 = mClientSocket.recv(2048)
     reqassinatura = data4.decode()
-    assinatura = descriptografiaAES(reqassinatura,senhaCriptografia)
+    assinatura = descriptografiaAES(reqassinatura, senhaCriptografia)
 
     # verifica se a chave compartilhada recebeida é a mesma enviada, e recebe o indentificador do cliente
     if req3 == str(chaveCompartilhada):
@@ -89,8 +85,9 @@ def HandleRequest(mClientSocket, mClientAddr):
         # Verifica se a assinatura esta correta
         if str(reqassinaturaDescriptografado1) != str(assinatura):
             print('Assinatura incompativel')
+
         else:
-            #Coma a assinatira Ok, ele envia para o cliente uma mensagem com o seu endereço e assina essa mensagem
+            # Com a a assinatira Ok, ele envia para o cliente uma mensagem com o seu endereço e assina essa mensagem
             reqDescriptografado = descriptografiaAES(req, senhaCriptografia)
             print(f'Identificação do cliente: {reqDescriptografado}')
             rep = f'Seu endereço: {mClientAddr}'
@@ -110,57 +107,61 @@ def HandleRequest(mClientSocket, mClientAddr):
                 reqassinaturaCriptografado2 = critogrtafiaAES(assinatura, senhaCriptografia)
                 mClientSocket.send(reqassinaturaCriptografado2.encode())
 
-                #Inicia um loop, para receber os nomes dos arquivos e envia-los para o cliente
+                # Inicia um loop, para receber os nomes dos arquivos e envia-los para o cliente
                 while True:
-                    #recebe nome do arquivo criptografado
-                    nomeArquivo = mClientSocket.recv(2048).decode() 
-                    
+                    # recebe nome do arquivo criptografado
+                    nomeArquivo = mClientSocket.recv(2048).decode()
+
                     data5 = mClientSocket.recv(2048)
                     reqassinatura1 = data5.decode()
                     reqassinaturaDescriptografado1 = descriptografiaAES(reqassinatura1, senhaCriptografia)
-                    
+
                     if str(reqassinaturaDescriptografado1) != str(assinatura):
                         print('Assinatura incompativel')
+                        break
                     else:
                         nomeArquivoDescriptografado = descriptografiaAES(nomeArquivo, senhaCriptografia)
-                        #Verifica se a extensao do arquivo é compativel
+                        # Verifica se a extensao do arquivo é compativel
                         extensao = nomeArquivoDescriptografado.split('.')[-1]
                         arquivoBinario = False
                         if extensao in tipoArquivoBinario:
                             arquivoBinario = True
-                        #Verifica se a extensao do arquivo é compativel
+                        # Verifica se a extensao do arquivo é compativel
                         if (arquivoBinario is False) and extensao not in tipoArquivoText:
-                            #Se nao é compativel ele fecha a conexao do servidor e imprimi a mensagem de erro
+                            # Se nao é compativel ele fecha a conexao do servidor e imprimi a mensagem de erro
                             print(htmlMessage.BadRequest())
                             mClientSocket.close()
                         else:
-                            #Se é compativel, é enviado a chave para a criptografia do fernet
+                            # Se é compativel, é enviado a chave para a criptografia do fernet
                             mClientSocket.send(key)
                             try:
-                                #É aberto o arquivo, que apos isso é criptografado pelo comando de fernet.encrypt e enviado criptografado para o cliente
+                                # É aberto o arquivo, que apos isso é criptografado pelo comando de fernet.encrypt e
+                                # enviado criptografado para o cliente
                                 file = open(nomeArquivoDescriptografado, 'rb')
                                 original = file.read()
                                 encrypted = fernet.encrypt(original)
                                 mClientSocket.send(encrypted)
                             except FileNotFoundError:
-                                #Printa a mensagem de erro NotFound, no caso de nao encontrar o arquivo
+                                # Printa a mensagem de erro NotFound, no caso de nao encontrar o arquivo
                                 print(htmlMessage.NotFound())
-                    
+
             else:
-                #Se o cliente nao estiver autorizdo parta acessar o servidor, imprimi a mensagem de erro 403 e fecha a conexao com o servidor  
+                # Se o cliente nao estiver autorizdo parta acessar o servidor, imprimi a mensagem de erro 403 e fecha a conexao com o servidor
                 print(htmlMessage.erro403())
                 mClientSocket.close()
 
     # Adicioana clientes na lista de clientes
     if mClientAddr not in listaClientes:
-        listaClientes.append([f'Identificação: {reqDescriptografado}', f'Chave compartilhada: {chaveCompartilhada}',f'endereço: {mClientAddr}'])
+        listaClientes.append([f'Identificação: {reqDescriptografado}', f'Chave compartilhada: {chaveCompartilhada}',
+                              f'endereço: {mClientAddr}'])
+
 
 tipoArquivoBinario = ['png', 'jpeg', 'bmp', 'jpg']
 tipoArquivoText = ['html', 'css', 'js']
 clientesAutorizados = [22, 10, 45, 44, 4433, 222, 44777]
 listaClientes = []
 
-#Configuraceoes iniciais do servidor 
+# Configuraceoes iniciais do servidor
 mSocketServer = socket(AF_INET, SOCK_STREAM)
 
 mSocketServer.bind(('127.0.0.1', 1235))
@@ -168,8 +169,7 @@ mSocketServer.bind(('127.0.0.1', 1235))
 mSocketServer.listen()
 print(f"servidor ouvindo em 127.0.0.1:1235")
 
-#Permite que exista a multiThread
+# Permite que exista a multiThread
 while True:
-
     clientSocket, clientAddr = mSocketServer.accept()
     Thread(target=HandleRequest, args=(clientSocket, clientAddr)).start()
