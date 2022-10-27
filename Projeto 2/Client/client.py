@@ -104,46 +104,26 @@ if req2 == str(chaveCompartilhada):
         # descriptografa a mensagem recebida
         mensagemDescriptografada = descriptografiaAES(reply, senhaCriptografia)
         print(f'Menssagem servidor: {mensagemDescriptografada}')
-
-        # Pos identificacao fazemos a solicitacao dos arquivos
-        while True:
+        
+        data2 = mClientSocket.recv(2048)
+        autorizacao = data2.decode()
+        autorizacaoDescriptografado = descriptografiaAES(autorizacao, senhaCriptografia)
+        if autorizacaoDescriptografado == 'cliente Autorizado':
             # Este loop foi criado apenas para que o cliente conseguisse enviar múltiplas solicitações de arquivos
-            nomeArquivo = input('Digite o nome do arquivo >>')
-
-            nomeArquivoCriptografado = critogrtafiaAES(nomeArquivo, senhaCriptografia)
-            mClientSocket.send(nomeArquivoCriptografado.encode())
-            # mClientSocket.send(nomeArquivo.encode())
-
-            data2 = mClientSocket.recv(2048)
-            autorizacao = data2.decode()
-            autorizacaoDescriptografado = descriptografiaAES(autorizacao, senhaCriptografia)
-            if autorizacaoDescriptografado == 'cliente Autorizado':
+            while True:
+                #Recebe nome do arquivo e criptografa para enviar para o server
+                nomeArquivo = input('Digite o nome do arquivo >>')
+                nomeArquivoCriptografado = critogrtafiaAES(nomeArquivo, senhaCriptografia)
+                mClientSocket.send(nomeArquivoCriptografado.encode())
+                
+                #Recebe a chave que criptografa os arquivos por meio da biblioteca fernet
                 recebeChave = mClientSocket.recv(1024)
                 recebeChave.decode()
                 fernet = Fernet(recebeChave)
 
-                data5 = mClientSocket.recv(2048).decode()
-                if data5 != 'Sintaxe cringe':
-                    extensao = nomeArquivo.split('.')[-1]
-                    arquivoBinario = False
-                    if extensao in tipoArquivoBinario:
-                        arquivoBinario = True
-
-                    if arquivoBinario:
-                        with open(nomeArquivo, 'wb') as file:
-                            while True:
-                                encriptado = mClientSocket.recv(1500000)
-                                descriptado = fernet.decrypt(encriptado)
-                                file.write(descriptado)
-                                break
-                    else:
-                        with open(nomeArquivo, 'wb') as file:
-                            encriptado = mClientSocket.recv(1000000)
-                            descriptado = fernet.decrypt(encriptado)
-                            file.write(descriptado)
-                else:
-                    print(data5)
-            else:
-                data4 = mClientSocket.recv(2048)
-                rep4 = data4.decode()
-                print(rep4)
+                #Abri um arquivo novo e recebe do servidor o arquivo criptografado e descriptografa ele com o comando decrypt, e escreve no novo arquivo
+                with open(nomeArquivo, 'wb') as file:
+                    encriptado = mClientSocket.recv(1500000)
+                    descriptado = fernet.decrypt(encriptado)
+                    file.write(descriptado)
+                    
